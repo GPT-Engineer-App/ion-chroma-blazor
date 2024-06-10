@@ -1,0 +1,50 @@
+@page "/"
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<PageTitle>Ion Chromatogram</PageTitle>
+
+<h3>Ion Chromatogram</h3>
+
+<div>
+    <label for="ion">Select Ion:</label>
+    <select id="ion" @bind="selectedIon">
+        @foreach (var ion in ions)
+        {
+            <option value="@ion">@ion</option>
+        }
+    </select>
+    <button @onclick="LoadChromatogram">Load Chromatogram</button>
+</div>
+
+@if (chromatogramData != null)
+{
+    <div>
+        <h4>Chromatogram for @selectedIon</h4>
+        <canvas id="chromatogramCanvas" width="800" height="400"></canvas>
+    </div>
+}
+
+@code {
+    private string selectedIon;
+    private List<string> ions = new List<string> { "Ion1", "Ion2", "Ion3" };
+    private List<ChromatogramPoint> chromatogramData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        selectedIon = ions.First();
+    }
+
+    private async Task LoadChromatogram()
+    {
+        chromatogramData = await Http.GetFromJsonAsync<List<ChromatogramPoint>>($"api/chromatogram/{selectedIon}");
+        await JS.InvokeVoidAsync("drawChromatogram", chromatogramData);
+    }
+
+    public class ChromatogramPoint
+    {
+        public double Time { get; set; }
+        public double Intensity { get; set; }
+    }
+}
